@@ -3,7 +3,6 @@ FROM nvidia/cuda:13.3.1-devel-ubuntu24.04
 ARG CUDA_DOCKER_ARCH=default
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV NVIDIA_CONTAINER_TOOLKIT_VERSION=1.19.1-1
 
 # Install deps
 RUN apt-get update && apt-get install -y \
