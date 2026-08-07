@@ -3,14 +3,14 @@ set -e
 
 MODEL_PATH=${MODEL_PATH:-/models/gemma.gguf}
 PORT=${PORT:-8080}
+GPU_LAYERS=${GPU_LAYERS:-999}
 
 echo "Starting llama.cpp server..."
 /app/llama.cpp/build/bin/llama-server \
   -m "$MODEL_PATH" \
   --host 0.0.0.0 \
   --port $PORT \
-  -n 512 \
-  --n-gpu-layers 1 \
+  --n-gpu-layers $GPU_LAYERS \
   &
 LLAMA_PID=$!
 
