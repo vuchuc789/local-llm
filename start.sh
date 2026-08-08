@@ -6,7 +6,7 @@ PORT=${PORT:-8080}
 GPU_LAYERS=${GPU_LAYERS:-999}
 
 echo "Starting llama.cpp server..."
-/app/llama.cpp/build/bin/llama-server \
+/app/llama-server \
   -m "$MODEL_PATH" \
   --host 0.0.0.0 \
   --port $PORT \

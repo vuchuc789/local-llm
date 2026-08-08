@@ -1,6 +1,4 @@
-FROM nvidia/cuda:13.3.1-devel-ubuntu24.04
-
-ENV DEBIAN_FRONTEND=noninteractive
+FROM nvidia/cuda:13.3.1-devel-ubuntu24.04 AS build
 
 # Install deps
 RUN apt-get update && apt-get install -y \
@@ -8,21 +6,17 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     ca-certificates \
-    curl \
-    libgomp1 \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install cloudflared
-RUN curl -Lo /usr/local/bin/cloudflared \
-    https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-    && chmod +x /usr/local/bin/cloudflared
+    curl
 
 # Clone llama.cpp
-WORKDIR /app
-RUN git clone https://github.com/ggml-org/llama.cpp.git
+RUN git clone https://github.com/ggml-org/llama.cpp.git app
 
-WORKDIR /app/llama.cpp
+WORKDIR /app
+
+# Install cloudflared
+RUN curl -Lo cloudflared \
+    https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+    && chmod +x cloudflared
 
 # Build with CUDA
 RUN cmake -B build \
@@ -36,10 +30,27 @@ RUN cmake -B build \
     . && \
     cmake --build build --config Release -j$(nproc)
 
+RUN mkdir lib && \
+    find build -name "*.so*" -exec cp -P {} lib \;
+
+FROM nvidia/cuda:13.3.1-runtime-ubuntu24.04 AS server
+
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /app/cloudflared /usr/local/bin/cloudflared
+COPY --from=build /app/lib/ /app
+COPY --from=build /app/build/bin/llama /app/build/bin/llama-server /app
+
+WORKDIR /app
+
 # Entrypoint
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+COPY start.sh start.sh
+RUN chmod +x start.sh
 
 EXPOSE 8080
 
-CMD ["/start.sh"]
+CMD ["./start.sh"]
