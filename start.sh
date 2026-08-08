@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-MODEL_PATH=${MODEL_PATH:-/models/gemma.gguf}
+MODEL_PATH=${MODEL_PATH:-/models/qwen-Q4_K_M.gguf}
 PORT=${PORT:-8080}
-GPU_LAYERS=${GPU_LAYERS:-999}
+GPU_LAYERS=${GPU_LAYERS:-all}
 
 echo "Starting llama.cpp server..."
 /app/llama-server \
@@ -11,6 +11,10 @@ echo "Starting llama.cpp server..."
   --host 0.0.0.0 \
   --port $PORT \
   --n-gpu-layers $GPU_LAYERS \
+  --temperature 0.6 \
+  --top-p 0.95 \
+  --top-k 20 \
+  --min-p 0 \
   &
 LLAMA_PID=$!
 

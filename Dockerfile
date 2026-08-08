@@ -24,9 +24,9 @@ RUN cmake -B build \
     -DGGML_CUDA=ON \
     -DGGML_BACKEND_DL=ON \
     -DGGML_CPU_ALL_VARIANTS=ON \
-    -DLLAMA_BUILD_SERVER=ON \
     -DLLAMA_BUILD_TESTS=OFF \
     -DCMAKE_CUDA_ARCHITECTURES=120 \
+    -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
     . && \
     cmake --build build --config Release -j$(nproc)
 
@@ -39,6 +39,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
     libgomp1 \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/cloudflared /usr/local/bin/cloudflared
