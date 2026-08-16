@@ -7,7 +7,7 @@ GPU_LAYERS=${GPU_LAYERS:-all}
 
 echo "Starting llama.cpp server..."
 /app/llama-server \
-  -m "$MODEL_PATH" \
+  --model "$MODEL_PATH" \
   --host 0.0.0.0 \
   --port $PORT \
   --n-gpu-layers $GPU_LAYERS \

@@ -9,15 +9,18 @@ ARG GIT_REF=master
 
 ARG NODE_VERSION=24
 
+# Stage 1: Fetch llama.cpp repository (multi-stage build)
 FROM docker.io/alpine/git AS fetch
 
 ARG GIT_REF
 
 WORKDIR /app
 
-# Clone llama.cpp
 RUN git clone --depth=1 --branch ${GIT_REF} https://github.com/ggml-org/llama.cpp.git .
 
+
+
+# Stage 2: Build UI frontend from Node.js
 FROM docker.io/node:${NODE_VERSION} AS web
 
 WORKDIR /app
@@ -28,12 +31,15 @@ RUN npm ci
 COPY --from=fetch /app/tools/ui/ ./
 RUN npm run build
 
+
+
+# Stage 3: Build llama.cpp with CUDA GPU support
 FROM docker.io/nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION} AS build
 
 ARG GCC_VERSION
 ARG CUDA_ARCH
 
-# Install deps
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
     gcc-${GCC_VERSION} \
     g++-${GCC_VERSION} \
@@ -52,7 +58,7 @@ WORKDIR /app
 COPY --from=fetch /app .
 COPY --from=web /app/dist tools/ui/dist
 
-# Build with CUDA
+# Compile llama.cpp with CUDA support and various architectures
 RUN cmake -B build \
     -DGGML_NATIVE=OFF \
     -DGGML_CUDA=ON \
@@ -64,15 +70,37 @@ RUN cmake -B build \
     . && \
     cmake --build build --config Release -j$(nproc)
 
-# Copy libs
+# Copy compiled shared libraries to lib directory
 RUN mkdir lib && \
     find build -name "*.so*" -exec cp -P {} lib \;
 
+
+
+# Stage 4: Simple runtime - llama-server binary only (no cloudflared wrapper)
+FROM docker.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS serve
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    libgomp1 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=build /app/lib .
+COPY --from=build /app/build/bin/llama /app/build/bin/llama-server ./
+
+EXPOSE 8080
+HEALTHCHECK CMD [ "curl", "-f", "http://localhost:8080/health" ]
+
+ENTRYPOINT [ "/app/llama-server" ]
+
+
+# Stage 5: Full serving runtime with cloudflared tunnel support
 FROM docker.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS server
 
 ARG TARGETARCH
 
-# Install deps
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
@@ -80,7 +108,7 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Install cloudflared
+# Install cloudflared (tunnel manager)
 RUN curl -Lo /usr/local/bin/cloudflared \
     https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${TARGETARCH} \
     && chmod +x /usr/local/bin/cloudflared
@@ -90,10 +118,12 @@ WORKDIR /app
 COPY --from=build /app/lib .
 COPY --from=build /app/build/bin/llama /app/build/bin/llama-server ./
 
-# Entrypoint
+# Copy and make executable entrypoint script
 COPY start.sh start.sh
 RUN chmod +x start.sh
 
 EXPOSE 8080
+HEALTHCHECK CMD [ "curl", "-f", "http://localhost:8080/health" ]
 
 CMD ["./start.sh"]
+
