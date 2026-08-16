@@ -91,7 +91,6 @@ COPY --from=build /app/lib .
 COPY --from=build /app/build/bin/llama /app/build/bin/llama-server ./
 
 EXPOSE 8080
-HEALTHCHECK CMD [ "curl", "-f", "http://localhost:8080/health" ]
 
 ENTRYPOINT [ "/app/llama-server" ]
 
@@ -123,7 +122,6 @@ COPY start.sh start.sh
 RUN chmod +x start.sh
 
 EXPOSE 8080
-HEALTHCHECK CMD [ "curl", "-f", "http://localhost:8080/health" ]
 
 CMD ["./start.sh"]
 
