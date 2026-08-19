@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-MODEL_PATH=${MODEL_PATH:-/models/qwen3.5-4b-Q4_K_M.gguf}
+MODEL_PATH=${MODEL_PATH:-/models/qwen3.5-4b-Q8_0.gguf}
 PORT=${PORT:-8080}
 GPU_LAYERS=${GPU_LAYERS:-all}
 
@@ -17,6 +17,9 @@ echo "Starting llama.cpp server..."
   --min-p 0.0 \
   --presence-penalty 1.5 \
   --repeat-penalty 1.0 \
+  --ctx-size 32000 \
+  --cache-type-k q8_0 \
+  --cache-type-v q8_0 \
   &
 LLAMA_PID=$!
 
