@@ -20,6 +20,9 @@ cmake -B build \
     -DCMAKE_CUDA_ARCHITECTURES=120 \
     -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined
 
+# CUDA 12.0 (sm_120) supports: RTX 5060, RTX 5070, RTX 5080, RTX 5090
+# See: https://developer.nvidia.com/cuda/gpus
+
 cmake --build build --config Release -j$(nproc)
 
 ./build/bin/llama-quantize <path>/<model>.gguf <path>/<model>-Q8_0.gguf Q8_0
@@ -37,6 +40,8 @@ docker build --target server -t local-llm:server .
 
 > To setup a Cloudflare tunnel and retrieve a token, follow the instruction [here](https://developers.cloudflare.com/tunnel/setup/). This is for running a public server.
 
+### Chat mode (local-llm:serve)
+
 ```bash
 docker run -itd --rm --gpus all -p 8080:8080 \
     -v ./models:/models --name local-llm-serve local-llm:serve \
@@ -44,11 +49,35 @@ docker run -itd --rm --gpus all -p 8080:8080 \
     -ngl all --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 \
     --presence-penalty 0.0 --repeat-penalty 1.0 \
     -c 32768 -ctk q8_0 -ctv q8_0
+```
 
+**Parameters:**
+- `-m`: Model path (`/models/qwen3.5-4b-Q8_0.gguf`)
+- `--host 0.0.0.0 --port 8080`: Bind to all interfaces on port 8080
+- `-ngl all`: Offload all layers to GPU (best for Q8_0)
+- `--temp 0.6`: Temperature for randomness (lower = more deterministic)
+- `--top-p 0.95` + `--top-k 20`: Nucleus sampling parameters
+- `--min-p 0.0`: Minimum probability threshold
+- `--presence-penalty 0.0`: Penalize repeated topics
+- `--repeat-penalty 1.0`: Penalize repeated tokens
+- `-c 32768`: Context size (32K tokens)
+- `-ctk q8_0 -ctv q8_0`: KV cache type for K and V (q8_0 saves VRAM)
+
+**Access:**
+- Chat UI: http://localhost:8080
+- API: http://localhost:8080/v1/chat/completions
+
+### Server mode (local-llm:server)
+
+```bash
 docker run -itd --gpus all -p 8080:8080 \
     -v ./models:/models -e TUNNEL_TOKEN=<token> \
     --restart unless-stopped \
     --name local-llm-server local-llm:server
 ```
+
+**Parameters:**
+- `-e TUNNEL_TOKEN`: Cloudflare Tunnel authentication token
+- `--restart unless-stopped`: Auto-restart on failure
 
 > Configs and docs are now for Qwen3.5 4B and following [Qwen's recommendations](https://huggingface.co/Qwen/Qwen3.5-4B#using-qwen35-via-the-chat-completions-api).
