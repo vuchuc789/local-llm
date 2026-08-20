@@ -40,7 +40,7 @@ docker build --target server -t local-llm:server .
 
 > To setup a Cloudflare tunnel and retrieve a token, follow the instruction [here](https://developers.cloudflare.com/tunnel/setup/). This is for running a public server.
 
-### Chat mode (local-llm:serve)
+### Serve mode (local-llm:serve) - Local coding agents
 
 ```bash
 docker run -itd --rm --gpus all -p 8080:8080 \
@@ -63,11 +63,9 @@ docker run -itd --rm --gpus all -p 8080:8080 \
 - `-c 32768`: Context size (32K tokens)
 - `-ctk q8_0 -ctv q8_0`: KV cache type for K and V (q8_0 saves VRAM)
 
-**Access:**
-- Chat UI: http://localhost:8080
-- API: http://localhost:8080/v1/chat/completions
+**Use case:** Local coding agents like opencode
 
-### Server mode (local-llm:server)
+### Server mode (local-llm:server) - Chat mode with web UI
 
 ```bash
 docker run -itd --gpus all -p 8080:8080 \
@@ -79,5 +77,9 @@ docker run -itd --gpus all -p 8080:8080 \
 **Parameters:**
 - `-e TUNNEL_TOKEN`: Cloudflare Tunnel authentication token
 - `--restart unless-stopped`: Auto-restart on failure
+
+**Access:**
+- Chat UI: http://localhost:8080
+- API: http://localhost:8080/v1/chat/completions
 
 > Configs and docs are now for Qwen3.5 4B and following [Qwen's recommendations](https://huggingface.co/Qwen/Qwen3.5-4B#using-qwen35-via-the-chat-completions-api).
