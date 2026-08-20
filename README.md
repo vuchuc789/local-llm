@@ -22,7 +22,7 @@ cmake -B build \
 
 cmake --build build --config Release -j$(nproc)
 
-./build/bin/llama-quantize <path>/<model>.gguf <path>/<model>-Q4_K_M.gguf Q4_K_M
+./build/bin/llama-quantize <path>/<model>.gguf <path>/<model>-Q8_0.gguf Q8_0
 
 ```
 
@@ -40,9 +40,10 @@ docker build --target server -t local-llm:server .
 ```bash
 docker run -itd --rm --gpus all -p 8080:8080 \
     -v ./models:/models --name local-llm-serve local-llm:serve \
-    -m /models/qwen3.5-4b-Q4_K_M.gguf --host 0.0.0.0 --port 8080 \
+    -m /models/qwen3.5-4b-Q8_0.gguf --host 0.0.0.0 --port 8080 \
     -ngl all --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 \
-    --presence-penalty 0.0 --repeat-penalty 1.0
+    --presence-penalty 0.0 --repeat-penalty 1.0 \
+    -c 32768 -ctk q8_0 -ctv q8_0
 
 docker run -itd --gpus all -p 8080:8080 \
     -v ./models:/models -e TUNNEL_TOKEN=<token> \
