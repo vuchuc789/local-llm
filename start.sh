@@ -2,14 +2,16 @@
 set -e
 
 MODEL_PATH=${MODEL_PATH:-/models/qwen3.5-4b-Q8_0.gguf}
-PORT=${PORT:-8080}
+PORT=${PORT:-9931}
 GPU_LAYERS=${GPU_LAYERS:-all}
+CORS_ORIGINS=${CORS_ORIGINS:-localhost}
 
 echo "Starting llama.cpp server..."
 /app/llama-server \
   --model "$MODEL_PATH" \
   --host 0.0.0.0 \
   --port $PORT \
+  --cors-origins $CORS_ORIGINS \
   --n-gpu-layers $GPU_LAYERS \
   --temperature 1.0 \
   --top-p 0.95 \

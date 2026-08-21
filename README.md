@@ -43,9 +43,9 @@ docker build --target server -t local-llm:server .
 ### Serve mode (local-llm:serve) - Local coding agents
 
 ```bash
-docker run -itd --rm --gpus all -p 8080:8080 \
+docker run -itd --rm --gpus all -p 9931:9931 \
     -v ./models:/models --name local-llm-serve local-llm:serve \
-    -m /models/qwen3.5-4b-Q8_0.gguf --host 0.0.0.0 --port 8080 \
+    -m /models/qwen3.5-4b-Q8_0.gguf --host 0.0.0.0 --port 9931 \
     -ngl all --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 \
     --presence-penalty 0.0 --repeat-penalty 1.0 \
     -c 32768 -ctk q8_0 -ctv q8_0
@@ -53,7 +53,7 @@ docker run -itd --rm --gpus all -p 8080:8080 \
 
 **Parameters:**
 - `-m`: Model path (`/models/qwen3.5-4b-Q8_0.gguf`)
-- `--host 0.0.0.0 --port 8080`: Bind to all interfaces on port 8080
+- `--host 0.0.0.0 --port 9931`: Bind to all interfaces on port 9931
 - `-ngl all`: Offload all layers to GPU (best for Q8_0)
 - `--temp 0.6`: Temperature for randomness (lower = more deterministic)
 - `--top-p 0.95` + `--top-k 20`: Nucleus sampling parameters
@@ -68,7 +68,7 @@ docker run -itd --rm --gpus all -p 8080:8080 \
 ### Server mode (local-llm:server) - Chat mode with web UI
 
 ```bash
-docker run -itd --gpus all -p 8080:8080 \
+docker run -itd --gpus all -p 9931:9931 \
     -v ./models:/models -e TUNNEL_TOKEN=<token> \
     --restart unless-stopped \
     --name local-llm-server local-llm:server
@@ -79,7 +79,7 @@ docker run -itd --gpus all -p 8080:8080 \
 - `--restart unless-stopped`: Auto-restart on failure
 
 **Access:**
-- Chat UI: http://localhost:8080
-- API: http://localhost:8080/v1/chat/completions
+- Chat UI: http://localhost:9931
+- API: http://localhost:9931/v1/chat/completions
 
 > Configs and docs are now for Qwen3.5 4B and following [Qwen's recommendations](https://huggingface.co/Qwen/Qwen3.5-4B#using-qwen35-via-the-chat-completions-api).

@@ -90,7 +90,7 @@ WORKDIR /app
 COPY --from=build /app/lib .
 COPY --from=build /app/build/bin/llama /app/build/bin/llama-server ./
 
-EXPOSE 8080
+EXPOSE 9931
 
 ENTRYPOINT [ "/app/llama-server" ]
 
@@ -121,7 +121,7 @@ COPY --from=build /app/build/bin/llama /app/build/bin/llama-server ./
 COPY start.sh start.sh
 RUN chmod +x start.sh
 
-EXPOSE 8080
+EXPOSE 9931
 
 CMD ["./start.sh"]
 
