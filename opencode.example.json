@@ -25,7 +25,7 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "llama.cpp (public)",
       "options": {
-        "baseURL": "https://<endpoint_url>/v1",
+        "baseURL": "https://<endpoint>/v1",
         "headers": {
           "CF-Access-Client-Id": "<client-id>",
           "CF-Access-Client-Secret": "<client-secret>"
