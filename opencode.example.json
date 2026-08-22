@@ -1,29 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "llama.cpp.local/qwen3.5:9b",
+  "model": "llama.cpp/qwen3.5:9b",
   "permission": {
     "websearch": "allow"
   },
   "provider": {
-    "llama.cpp.local": {
+    "llama.cpp": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "llama.cpp (local)",
-      "options": {
-        "baseURL": "http://127.0.0.1:9931/v1"
-      },
-      "models": {
-        "qwen3.5:9b": {
-          "name": "Qwen3.5:9B (Q4_K_M)",
-          "limit": {
-            "context": 108000,
-            "output": 8192
-          }
-        }
-      }
-    },
-    "llama.cpp.public": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "llama.cpp (public)",
+      "name": "llama.cpp",
       "options": {
         "baseURL": "https://<endpoint>/v1",
         "headers": {
