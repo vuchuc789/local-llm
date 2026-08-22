@@ -25,7 +25,7 @@ cmake -B build \
 
 cmake --build build --config Release -j$(nproc)
 
-./build/bin/llama-quantize <path>/<model>.gguf <path>/<model>-Q8_0.gguf Q8_0
+./build/bin/llama-quantize <path>/<model>.gguf <path>/<model>-Q4_K_M.gguf Q4_K_M
 
 ```
 
@@ -43,25 +43,26 @@ docker build --target server -t local-llm:server .
 ### Serve mode (local-llm:serve) - Local coding agents
 
 ```bash
-docker run -itd --rm --gpus all -p 9931:9931 \
+docker run -itd --gpus all -p 9931:9931 \
     -v ./models:/models --name local-llm-serve local-llm:serve \
-    -m /models/qwen3.5-4b-Q8_0.gguf --host 0.0.0.0 --port 9931 \
+    -m /models/Qwen3.5-9B-Q4_K_M.gguf --host 0.0.0.0 --port 9931 \
     -ngl all --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 \
     --presence-penalty 0.0 --repeat-penalty 1.0 \
-    -c 32768 -ctk q8_0 -ctv q8_0
+    -c 108000 -ctk q8_0 -ctv q8_0 --flash-attn
 ```
 
 **Parameters:**
-- `-m`: Model path (`/models/qwen3.5-4b-Q8_0.gguf`)
+- `-m`: Model path (`/models/Qwen3.5-9B-Q4_K_M.gguf`)
 - `--host 0.0.0.0 --port 9931`: Bind to all interfaces on port 9931
-- `-ngl all`: Offload all layers to GPU (best for Q8_0)
+- `-ngl all`: Offload all layers to GPU
 - `--temp 0.6`: Temperature for randomness (lower = more deterministic)
 - `--top-p 0.95` + `--top-k 20`: Nucleus sampling parameters
 - `--min-p 0.0`: Minimum probability threshold
 - `--presence-penalty 0.0`: Penalize repeated topics
 - `--repeat-penalty 1.0`: Penalize repeated tokens
-- `-c 32768`: Context size (32K tokens)
+- `-c 108000`: Context size (108K tokens)
 - `-ctk q8_0 -ctv q8_0`: KV cache type for K and V (q8_0 saves VRAM)
+- `--flash-attn`: Enable flash attention for faster inference
 
 **Use case:** Local coding agents like opencode
 
@@ -82,4 +83,4 @@ docker run -itd --gpus all -p 9931:9931 \
 - Chat UI: http://localhost:9931
 - API: http://localhost:9931/v1/chat/completions
 
-> Configs and docs are now for Qwen3.5 4B and following [Qwen's recommendations](https://huggingface.co/Qwen/Qwen3.5-4B#using-qwen35-via-the-chat-completions-api).
+> Configs and docs are now for Qwen3.5 9B and following [Qwen's recommendations](https://huggingface.co/Qwen/Qwen3.5-9B#using-qwen35-via-the-chat-completions-api).
