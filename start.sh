@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-MODEL_PATH=${MODEL_PATH:-/models/qwen3.5-4b-Q8_0.gguf}
+MODEL_PATH=${MODEL_PATH:-/models/Qwen3.5-9B-Q4_K_M.gguf}
 PORT=${PORT:-9931}
 GPU_LAYERS=${GPU_LAYERS:-all}
 CORS_ORIGINS=${CORS_ORIGINS:-localhost}
@@ -13,13 +13,18 @@ echo "Starting llama.cpp server..."
   --port $PORT \
   --cors-origins $CORS_ORIGINS \
   --n-gpu-layers $GPU_LAYERS \
-  --temperature 1.0 \
+  --fit on \
+  --fit-target 256 \
+  --flash-attn on \
+  --threads 16 \
+  --threads-batch 16 \
+  --temperature 0.6 \
   --top-p 0.95 \
   --top-k 20 \
   --min-p 0.0 \
-  --presence-penalty 1.5 \
+  --presence-penalty 0.0 \
   --repeat-penalty 1.0 \
-  --ctx-size 32768 \
+  --ctx-size 108000 \
   --cache-type-k q8_0 \
   --cache-type-v q8_0 \
   &
