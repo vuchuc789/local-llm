@@ -20,7 +20,7 @@
           "name": "Qwen3.5:9B (Q4_K_M)",
           "limit": {
             "context": 108000,
-            "output": 8192
+            "output": 16384
           }
         }
       }
