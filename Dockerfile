@@ -95,33 +95,5 @@ EXPOSE 9931
 ENTRYPOINT [ "/app/llama-server" ]
 
 
-# Stage 5: Full serving runtime with cloudflared tunnel support
-FROM docker.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS server
 
-ARG TARGETARCH
-
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    curl \
-    libgomp1 \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install cloudflared (tunnel manager)
-RUN curl -Lo /usr/local/bin/cloudflared \
-    https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${TARGETARCH} \
-    && chmod +x /usr/local/bin/cloudflared
-
-WORKDIR /app
-
-COPY --from=build /app/lib .
-COPY --from=build /app/build/bin/llama /app/build/bin/llama-server ./
-
-# Copy and make executable entrypoint script
-COPY start.sh start.sh
-RUN chmod +x start.sh
-
-EXPOSE 9931
-
-CMD ["./start.sh"]
 

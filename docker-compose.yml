@@ -1,0 +1,46 @@
+services:
+  llama-server:
+    build:
+      context: .
+      target: serve
+    ports:
+      - "127.0.0.1:9931:9931"
+    environment:
+      - LLAMA_ARG_MODEL=${MODEL:-/models/Qwen3.5-9B-Q4_K_M.gguf}
+      - LLAMA_ARG_HOST=${HOST:-0.0.0.0}
+      - LLAMA_ARG_PORT=${PORT:-9931}
+      - LLAMA_ARG_CORS_ORIGINS=${CORS_ORIGINS:-localhost}
+      - LLAMA_ARG_N_GPU_LAYERS=${GPU_LAYERS:-all}
+      - LLAMA_ARG_FIT=${FIT:-off}
+      - LLAMA_ARG_FLASH_ATTN=${FLASH_ATTN:-on}
+      - LLAMA_ARG_TEMPERATURE=${TEMPERATURE:-0.6}
+      - LLAMA_ARG_TOP_P=${TOP_P:-0.95}
+      - LLAMA_ARG_TOP_K=${TOP_K:-20}
+      - LLAMA_ARG_MIN_P=${MIN_P:-0.0}
+      - LLAMA_ARG_PRESENCE_PENALTY=${PRESENCE_PENALTY:-0.0}
+      - LLAMA_ARG_REPEAT_PENALTY=${REPEAT_PENALTY:-1.0}
+      - LLAMA_ARG_CTX_SIZE=${CTX_SIZE:-108000}
+      - LLAMA_ARG_CACHE_TYPE_K=${CACHE_TYPE_K:-q8_0}
+      - LLAMA_ARG_CACHE_TYPE_V=${CACHE_TYPE_V:-q8_0}
+    volumes:
+      - ./models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - llama-net
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    environment:
+      - TUNNEL_TOKEN
+    command: tunnel --no-autoupdate run
+    restart: unless-stopped
+    networks:
+      - llama-net
+networks:
+  llama-net:
+    driver: bridge
