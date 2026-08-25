@@ -33,54 +33,88 @@ cmake --build build --config Release -j$(nproc)
 
 ```bash
 docker build --target serve -t local-llm:serve .
-docker build --target server -t local-llm:server .
+# docker build --target server -t local-llm:server . (deprecated)
 ```
 
-## Run Docker containers
+## Run using Docker Compose
 
 > To setup a Cloudflare tunnel and retrieve a token, follow the instruction [here](https://developers.cloudflare.com/tunnel/setup/). This is for running a public server.
 
-### Serve mode (local-llm:serve) - Local coding agents
+### Setup
+
+Create a `.env` file or set environment variables:
 
 ```bash
-docker run -itd --gpus all -p 9931:9931 \
-    -v ./models:/models --name local-llm-serve local-llm:serve \
-    -m /models/Qwen3.5-9B-Q4_K_M.gguf --host 0.0.0.0 --port 9931 \
-    -ngl all --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 \
-    --presence-penalty 0.0 --repeat-penalty 1.0 \
-    -c 108000 -ctk q8_0 -ctv q8_0 --flash-attn
+# Required
+export TUNNEL_TOKEN=<your-cloudflare-tunnel-token>
+
+# Optional (with defaults)
+export MODEL=/models/Qwen3.5-9B-Q4_K_M.gguf
+export HOST=0.0.0.0
+export PORT=9931
+export CORS_ORIGINS=localhost
+export GPU_LAYERS=all
+export FIT=off
+export FLASH_ATTN=on
+export TEMPERATURE=0.6
+export TOP_P=0.95
+export TOP_K=20
+export MIN_P=0.0
+export PRESENCE_PENALTY=0.0
+export REPEAT_PENALTY=1.0
+export CTX_SIZE=108000
+export CACHE_TYPE_K=q8_0
+export CACHE_TYPE_V=q8_0
 ```
 
-**Parameters:**
-- `-m`: Model path (`/models/Qwen3.5-9B-Q4_K_M.gguf`)
-- `--host 0.0.0.0 --port 9931`: Bind to all interfaces on port 9931
-- `-ngl all`: Offload all layers to GPU
-- `--temp 0.6`: Temperature for randomness (lower = more deterministic)
-- `--top-p 0.95` + `--top-k 20`: Nucleus sampling parameters
-- `--min-p 0.0`: Minimum probability threshold
-- `--presence-penalty 0.0`: Penalize repeated topics
-- `--repeat-penalty 1.0`: Penalize repeated tokens
-- `-c 108000`: Context size (108K tokens)
-- `-ctk q8_0 -ctv q8_0`: KV cache type for K and V (q8_0 saves VRAM)
-- `--flash-attn`: Enable flash attention for faster inference
+### Start services
+
+```bash
+docker-compose up --build
+```
+
+### Service details
+
+#### llama-server
+
+Built from `local-llm:serve` image with all llama.cpp server options as environment variables.
+
+**Environment variables:**
+- `LLAMA_ARG_MODEL`: Model path (default: `/models/Qwen3.5-9B-Q4_K_M.gguf`)
+- `LLAMA_ARG_HOST`: Host to bind (default: `0.0.0.0`)
+- `LLAMA_ARG_PORT`: Port to bind (default: `9931`)
+- `LLAMA_ARG_CORS_ORIGINS`: CORS origins (default: `localhost`)
+- `LLAMA_ARG_N_GPU_LAYERS`: GPU layers (default: `all`)
+- `LLAMA_ARG_FIT`: Fit arguments (default: `off`)
+- `LLAMA_ARG_FLASH_ATTN`: Flash attention (default: `on`)
+- `LLAMA_ARG_TEMPERATURE`: Sampling temperature (default: `0.6`)
+- `LLAMA_ARG_TOP_P`: Top-p sampling (default: `0.95`)
+- `LLAMA_ARG_TOP_K`: Top-k sampling (default: `20`)
+- `LLAMA_ARG_MIN_P`: Min-p sampling (default: `0.0`)
+- `LLAMA_ARG_PRESENCE_PENALTY`: Presence penalty (default: `0.0`)
+- `LLAMA_ARG_REPEAT_PENALTY`: Repeat penalty (default: `1.0`)
+- `LLAMA_ARG_CTX_SIZE`: Context size (default: `108000`)
+- `LLAMA_ARG_CACHE_TYPE_K`: KV cache type K (default: `q8_0`)
+- `LLAMA_ARG_CACHE_TYPE_V`: KV cache type V (default: `q8_0`)
+
+**Access:**
+- Local: http://127.0.0.1:9931
+- API: http://127.0.0.1:9931/v1/chat/completions
 
 **Use case:** Local coding agents like opencode
 
-### Server mode (local-llm:server) - Chat mode with web UI
+#### cloudflared
 
-```bash
-docker run -itd --gpus all -p 9931:9931 \
-    -v ./models:/models -e TUNNEL_TOKEN=<token> \
-    --restart unless-stopped \
-    --name local-llm-server local-llm:server
-```
+Uses official prebuilt image `cloudflare/cloudflared:latest`.
 
-**Parameters:**
-- `-e TUNNEL_TOKEN`: Cloudflare Tunnel authentication token
-- `--restart unless-stopped`: Auto-restart on failure
+**Environment variables:**
+- `TUNNEL_TOKEN`: Cloudflare Tunnel authentication token
 
 **Access:**
+- External: https://<your-subdomain>.trycloudflare.com
 - Chat UI: http://localhost:9931
 - API: http://localhost:9931/v1/chat/completions
+
+**Use case:** Public chat mode with web UI
 
 > Configs and docs are now for Qwen3.5 9B and following [Qwen's recommendations](https://huggingface.co/Qwen/Qwen3.5-9B#using-qwen35-via-the-chat-completions-api).
