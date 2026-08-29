@@ -7,12 +7,15 @@ services:
       - "127.0.0.1:9931:9931"
     environment:
       - LLAMA_ARG_MODEL=${MODEL:-/models/Qwen3.5-9B-Q4_K_M.gguf}
+      - LLAMA_ARG_MMPROJ=${MMPROJ:-/models/mmproj-Qwen3.5-9B-F16.gguf}
       - LLAMA_ARG_HOST=${HOST:-0.0.0.0}
       - LLAMA_ARG_PORT=${PORT:-9931}
       - LLAMA_ARG_CORS_ORIGINS=${CORS_ORIGINS:-localhost}
       - LLAMA_ARG_N_GPU_LAYERS=${GPU_LAYERS:-all}
+      - LLAMA_ARG_THREADS=${THREADS:-16}
       - LLAMA_ARG_FIT=${FIT:-off}
       - LLAMA_ARG_FLASH_ATTN=${FLASH_ATTN:-on}
+      - LLAMA_ARG_MMPROJ_OFFLOAD=${MMPROJ_OFFLOAD:-off}
       - LLAMA_ARG_TEMPERATURE=${TEMPERATURE:-0.6}
       - LLAMA_ARG_TOP_P=${TOP_P:-0.95}
       - LLAMA_ARG_TOP_K=${TOP_K:-20}
