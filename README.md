@@ -65,6 +65,8 @@ export REPEAT_PENALTY=1.0
 export CTX_SIZE=108000
 export CACHE_TYPE_K=q8_0
 export CACHE_TYPE_V=q8_0
+export MMPROJ=/models/mmproj-Qwen3.5-9B-F16.gguf
+export MMPROJ_OFFLOAD=off
 ```
 
 ### Start services
@@ -81,12 +83,15 @@ Built from `local-llm:serve` image with all llama.cpp server options as environm
 
 **Environment variables:**
 - `LLAMA_ARG_MODEL`: Model path (default: `/models/Qwen3.5-9B-Q4_K_M.gguf`)
+- `LLAMA_ARG_MMPROJ`: MMProj model path for vision (default: `/models/mmproj-Qwen3.5-9B-F16.gguf`)
 - `LLAMA_ARG_HOST`: Host to bind (default: `0.0.0.0`)
 - `LLAMA_ARG_PORT`: Port to bind (default: `9931`)
 - `LLAMA_ARG_CORS_ORIGINS`: CORS origins (default: `localhost`)
 - `LLAMA_ARG_N_GPU_LAYERS`: GPU layers (default: `all`)
 - `LLAMA_ARG_FIT`: Fit arguments (default: `off`)
 - `LLAMA_ARG_FLASH_ATTN`: Flash attention (default: `on`)
+- `LLAMA_ARG_MMPROJ_OFFLOAD`: MMProj offload (default: `off`)
+- `LLAMA_ARG_THREADS`: Number of threads (default: `16`)
 - `LLAMA_ARG_TEMPERATURE`: Sampling temperature (default: `0.6`)
 - `LLAMA_ARG_TOP_P`: Top-p sampling (default: `0.95`)
 - `LLAMA_ARG_TOP_K`: Top-k sampling (default: `20`)
@@ -102,6 +107,10 @@ Built from `local-llm:serve` image with all llama.cpp server options as environm
 - API: http://127.0.0.1:9931/v1/chat/completions
 
 **Use case:** Local coding agents like opencode
+
+#### vision
+
+Supports multimodal models with MMProj for vision capabilities. Enable by setting `LLAMA_ARG_MMPROJ` to a multimodal model path.
 
 #### cloudflared
 
