@@ -9,7 +9,6 @@ ARG GIT_REF=master
 
 ARG NODE_VERSION=24
 
-# Stage 1: Fetch llama.cpp repository (multi-stage build)
 FROM docker.io/alpine/git AS fetch
 
 ARG GIT_REF
@@ -20,7 +19,6 @@ RUN git clone --depth=1 --branch ${GIT_REF} https://github.com/ggml-org/llama.cp
 
 
 
-# Stage 2: Build UI frontend from Node.js
 FROM docker.io/node:${NODE_VERSION} AS web
 
 WORKDIR /app
@@ -33,8 +31,7 @@ RUN npm run build
 
 
 
-# Stage 3: Build llama.cpp with CUDA GPU support
-FROM docker.io/nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION} AS build
+FROM docker.io/nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION} AS build-base
 
 ARG GCC_VERSION
 ARG CUDA_ARCH
@@ -56,6 +53,32 @@ ENV CC=gcc-${GCC_VERSION} CXX=g++-${GCC_VERSION} CUDAHOSTCXX=g++-${GCC_VERSION}
 WORKDIR /app
 
 COPY --from=fetch /app .
+
+
+
+FROM build-base AS build
+
+# Compile llama.cpp with CUDA support and various architectures
+RUN cmake -B build \
+    -DGGML_NATIVE=OFF \
+    -DGGML_CUDA=ON \
+    -DGGML_BACKEND_DL=ON \
+    -DGGML_CPU_ALL_VARIANTS=ON \
+    -DLLAMA_BUILD_TESTS=OFF \
+    -DLLAMA_USE_PREBUILT_UI=OFF \
+    -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH} \
+    -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+    . && \
+    cmake --build build --config Release -j$(nproc)
+
+# Copy compiled shared libraries to lib directory
+RUN mkdir lib && \
+    find build -name "*.so*" -exec cp -P {} lib \;
+
+
+
+FROM build-base AS build-with-ui
+
 COPY --from=web /app/dist tools/ui/dist
 
 # Compile llama.cpp with CUDA support and various architectures
@@ -76,8 +99,7 @@ RUN mkdir lib && \
 
 
 
-# Stage 4: Simple runtime - llama-server binary only (no cloudflared wrapper)
-FROM docker.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS serve
+FROM docker.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS serve-base
 
 RUN apt-get update && apt-get install -y \
     curl \
@@ -86,6 +108,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+
+
+FROM serve-base AS serve
 
 COPY --from=build /app/lib .
 COPY --from=build /app/build/bin/llama /app/build/bin/llama-server ./
@@ -96,4 +122,11 @@ ENTRYPOINT [ "/app/llama-server" ]
 
 
 
+FROM serve-base AS serve-with-ui
 
+COPY --from=build-with-ui /app/lib .
+COPY --from=build-with-ui /app/build/bin/llama /app/build/bin/llama-server ./
+
+EXPOSE 9931
+
+ENTRYPOINT [ "/app/llama-server" ]
