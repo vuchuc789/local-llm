@@ -45,13 +45,13 @@ services:
     volumes:
       - ./data/open-webui:/app/backend/data
     environment:
-      - WEBUI_ADMIN_EMAIL
-      - TAVILY_API_KEY
-      - WEBUI_AUTH_TRUSTED_EMAIL_HEADER=Cf-Access-Authenticated-User-Email
       - WEBUI_URL=${WEBUI_URL:-http://localhost:3000}
       - CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN:-http://localhost:3000}
+      - WEBUI_AUTH_TRUSTED_EMAIL_HEADER=Cf-Access-Authenticated-User-Email
+      - WEBUI_AUTH_SIGNOUT_REDIRECT_URL=${WEBUI_AUTH_SIGNOUT_REDIRECT_URL:-http://localhost:3000}
       - ENABLE_LOGIN_FORM=${ENABLE_LOGIN_FORM:-False}
       - ENABLE_PASSWORD_CHANGE_FORM=${ENABLE_LOGIN_FORM:-False}
+      - WEBUI_ADMIN_EMAIL
       - DEFAULT_USER_ROLE=${DEFAULT_USER_ROLE:-user}
       - HF_HUB_OFFLINE=${HF_HUB_OFFLINE:-1}
       - HF_HUB_VERBOSITY=${HF_HUB_VERBOSITY:-error}
@@ -64,6 +64,7 @@ services:
       - ENABLE_WEB_SEARCH=${ENABLE_WEB_SEARCH:-True}
       - WEB_SEARCH_ENGINE=${WEB_SEARCH_ENGINE:-tavily}
       - WEB_LOADER_ENGINE=${WEB_LOADER_ENGINE:-tavily}
+      - TAVILY_API_KEY
     ports:
       - "127.0.0.1:3000:8080"
     networks:
