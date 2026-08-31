@@ -3,3 +3,5 @@ models/**/*
 data/**/*
 !data/.gitkeep
 *-creds.*
+.env*
+!.env.example
